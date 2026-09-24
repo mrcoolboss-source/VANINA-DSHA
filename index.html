@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>КП-помощник | СДЭК</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #f4f7fa; font-family: 'Inter', system-ui, sans-serif; padding: 2rem 1rem; color: #1A2C2C; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 32px; padding: 2rem 2rem 1.5rem; box-shadow: 0 20px 40px -12px rgba(0,0,0,0.1); }
+        .header-card { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; padding-bottom: 1.5rem; border-bottom: 2px solid #eef2f5; margin-bottom: 1.8rem; }
+        .logo-area { display: flex; align-items: center; gap: 12px; }
+        .logo-text { font-size: 2rem; font-weight: 800; color: #1A2C2C; }
+        .logo-text span { color: #119C41; }
+        .manager-info { font-size: 0.85rem; color: #5a6e6e; text-align: right; line-height: 1.6; }
+        .manager-info strong { color: #1A2C2C; font-size: 0.95rem; }
+        .manager-info a { color: #119C41; text-decoration: none; font-weight: 500; }
+        .manager-info a:hover { text-decoration: underline; }
+        .manager-info .address { color: #7a8a8a; font-size: 0.78rem; }
+        h1 { font-size: 1.8rem; margin-bottom: 0.2rem; display: flex; align-items: center; gap: 10px; }
+        .sub { color: #5a6e6e; margin-bottom: 2rem; }
+        .import-section { background: #f8fafc; border-radius: 24px; padding: 1.2rem 1.5rem; margin-bottom: 2rem; border: 1px dashed #119C41; display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; }
+        .import-section .field-group { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; width: 100%; }
+        .import-section label { font-weight: 600; color: #1A2C2C; margin-right: 0.3rem; }
+        .import-section input[type="text"] { padding: 0.4rem 0.8rem; border: 1.5px solid #d0d9df; border-radius: 12px; font-family: inherit; font-size: 0.9rem; min-width: 180px; }
+        .import-section .btn-import { background: #119C41; color: white; border: none; padding: 0.4rem 1.2rem; border-radius: 30px; cursor: pointer; font-weight: 600; transition: 0.15s; }
+        .import-section .btn-import:hover { background: #0E7A35; }
+        .import-section .file-input { display: none; }
+        .import-section textarea { flex: 1; min-width: 200px; padding: 0.4rem 0.8rem; border: 1px solid #d0d9df; border-radius: 12px; font-family: inherit; font-size: 0.85rem; resize: vertical; min-height: 60px; }
+        .import-section .hint { font-size: 0.75rem; color: #5a6e6e; width: 100%; }
+        .form-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; background: #f8fafc; padding: 1.2rem 1.5rem; border-radius: 24px; border: 1px solid #e2e8e6; margin-bottom: 1rem; }
+        .form-group { display: flex; flex-direction: column; gap: 4px; }
+        .form-group label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #5a6e6e; }
+        .form-group input, .form-group select { padding: 0.5rem 0.8rem; border: 1.5px solid #d0d9df; border-radius: 12px; font-size: 0.9rem; font-family: inherit; transition: 0.15s; background: white; }
+        .form-group input:focus, .form-group select:focus { border-color: #119C41; outline: none; box-shadow: 0 0 0 3px rgba(17,156,65,0.15); }
+        .btn-add { background: #119C41; color: white; border: none; padding: 0.6rem 1.8rem; border-radius: 40px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: 0.15s; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 1.5rem; }
+        .btn-add:hover { background: #0E7A35; }
+        .current-company-badge { display: inline-block; background: #E8F5ED; color: #0E7A35; padding: 0.2rem 1rem; border-radius: 40px; font-weight: 600; font-size: 0.9rem; margin-left: 0.5rem; }
+        .table-wrapper { overflow-x: auto; margin: 1.2rem 0; border-radius: 16px; border: 1px solid #dde3e8; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.85rem; }
+        th { background: #0f2b2b; color: white; font-weight: 700; padding: 0.8rem 0.8rem; text-align: left; border-bottom: 2px solid #119C41; letter-spacing: 0.3px; text-transform: uppercase; font-size: 0.7rem; }
+        th:first-child { border-top-left-radius: 16px; }
+        th:last-child { border-top-right-radius: 16px; }
+        td { padding: 0.7rem 0.8rem; border-bottom: 1px solid #edf2f6; vertical-align: middle; color: #1a2c2c; background: white; }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) td { background: #f8fafc; }
+        tr:hover td { background: #eaf3ed; transition: 0.15s; }
+        .delete-btn { background: none; border: none; color: #b0b9c0; cursor: pointer; font-size: 1rem; transition: 0.15s; }
+        .delete-btn:hover { color: #e67e8f; transform: scale(1.1); }
+        .empty-message { padding: 2rem; text-align: center; color: #9aabae; font-style: italic; }
+        .toolbar { display: flex; flex-wrap: wrap; gap: 1rem; margin: 1rem 0 0.5rem; }
+        .btn-export { background: #e8edf0; border: none; padding: 0.5rem 1.8rem; border-radius: 40px; font-weight: 600; cursor: pointer; transition: 0.15s; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+        .btn-export:hover { background: #d0d9df; }
+        .btn-export.green { background: #119C41; color: white; }
+        .btn-export.green:hover { background: #0E7A35; }
+        .btn-export.red { background: #e67e8f; color: white; }
+        .btn-export.red:hover { background: #c0392b; }
+        .total-row { margin-top: 0.5rem; font-weight: 600; text-align: right; font-size: 0.95rem; }
+        .checkbox-group { display: flex; align-items: center; gap: 0.5rem; font-weight: 500; color: #1A2C2C; margin-bottom: 0.5rem; }
+        .checkbox-group input[type="checkbox"] { width: 18px; height: 18px; accent-color: #119C41; cursor: pointer; }
+        @media (max-width: 700px) {
+            .container { padding: 1.2rem; }
+            .form-row { grid-template-columns: 1fr; }
+            .header-card { flex-direction: column; align-items: flex-start; }
+            .manager-info { text-align: left; width: 100%; }
+            .import-section { flex-direction: column; align-items: stretch; }
+            .import-section textarea { min-height: 80px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header-card">
+        <div class="logo-area">
+            <div class="logo-text">СДЭК<span>.</span></div>
+            <span style="font-weight: 500; color: #5a6e6e; font-size: 0.9rem;">КП-помощник</span>
+        </div>
+        <div class="manager-info">
+            <strong>Бухтоярова Дарья</strong><br>
+            Коммерческий представитель<br>
+            Группа Компаний СДЭК<br>
+            <span class="address">350072, г. Краснодар, улица имени 40-летия Победы, 37</span><br>
+            <a href="mailto:d.bukhtoiarova@cdek.ru">d.bukhtoiarova@cdek.ru</a><br>
+            <a href="tel:+79522366284">+7 952 236 62 84</a> · <a href="tel:+79533618517">8 953 361 85 17</a> <span style="color:#7a8a8a;">(доб. 6004)</span>
+        </div>
+    </div>
+
+    <h1><i class="fas fa-file-invoice" style="color:#119C41;"></i> КП-помощник</h1>
+    <div class="sub">Загрузите прайс-лист из СДЭК, укажите компанию, и получите готовое коммерческое предложение</div>
+
+    <div class="import-section">
+        <div class="field-group">
+            <label><i class="fas fa-building"></i> Компания:</label>
+            <input type="text" id="companyInput" placeholder="ООО Ромашка" style="flex:1; min-width:150px;">
+            <button class="btn-import" id="importFileBtn"><i class="fas fa-file-excel"></i> Загрузить Excel</button>
+            <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls,.csv">
+            <span style="color:#5a6e6e; font-size:0.9rem;">или</span>
+            <textarea id="pasteArea" placeholder="Вставьте скопированную таблицу из Excel (Ctrl+V)"></textarea>
+            <button class="btn-import" id="importPasteBtn"><i class="fas fa-paste"></i> Вставить</button>
+        </div>
+        <div class="hint"><i class="fas fa-info-circle"></i> Формат выгрузки СДЭК: колонки «Сервис», «Режим», «Город из», «Город в», «... кг, руб», «Срок доставки от/до».</div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label><i class="fas fa-map-marker-alt"></i> Город отправителя</label>
+            <input type="text" id="fromCity" placeholder="Санкт-Петербург">
+        </div>
+        <div class="form-group">
+            <label><i class="fas fa-map-pin"></i> Город получателя</label>
+            <input type="text" id="toCity" placeholder="Москва">
+        </div>
+        <div class="form-group">
+            <label><i class="fas fa-tag"></i> Тариф</label>
+            <select id="tariff">
+                <option value="Посылка">Посылка</option>
+                <option value="Магистральный">Магистральный</option>
+                <option value="Экспресс">Экспресс</option>
+                <option value="Сверхсрочный">Сверхсрочный</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label><i class="fas fa-route"></i> Режим</label>
+            <select id="mode">
+                <option value="склад-склад">склад-склад</option>
+                <option value="склад-дверь">склад-дверь</option>
+                <option value="дверь-склад">дверь-склад</option>
+                <option value="дверь-дверь">дверь-дверь</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label><i class="fas fa-weight-hanging"></i> Вес, кг</label>
+            <input type="number" id="weight" placeholder="2.0" step="0.1">
+        </div>
+        <div class="form-group">
+            <label><i class="fas fa-ruble-sign"></i> Цена, ₽</label>
+            <input type="number" id="price" placeholder="1500" step="0.01">
+        </div>
+        <div class="form-group">
+            <label><i class="fas fa-clock"></i> Срок (дни)</label>
+            <input type="number" id="days" placeholder="3">
+        </div>
+    </div>
+    <button class="btn-add" id="addBtn"><i class="fas fa-plus-circle"></i> Добавить один кейс</button>
+
+    <div style="margin-top: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+            <h3 style="font-weight: 600; font-size: 1.1rem;">
+                <i class="fas fa-list-ul" style="color:#119C41;"></i> Список кейсов
+                <span id="companyBadge" class="current-company-badge" style="display:none;"></span>
+                (<span id="count">0</span>)
+            </h3>
+            <div class="toolbar">
+                <button class="btn-export green" id="exportPdfBtn"><i class="fas fa-file-pdf"></i> Экспорт в PDF</button>
+                <button class="btn-export red" id="clearAllBtn"><i class="fas fa-trash-alt"></i> Очистить всё</button>
+            </div>
+        </div>
+
+        <div class="checkbox-group">
+            <input type="checkbox" id="showTotalCheckbox" checked>
+            <label for="showTotalCheckbox">Показывать итоговую сумму</label>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>№</th>
+                        <th>Откуда</th>
+                        <th>Куда</th>
+                        <th>Тариф</th>
+                        <th>Режим</th>
+                        <th>Вес, кг</th>
+                        <th>Цена, ₽</th>
+                        <th>Срок (дн.)</th>
+                        <th style="width: 50px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+        <div id="emptyMessage" class="empty-message">Пока нет добавленных кейсов. Загрузите прайс-лист или добавьте вручную.</div>
+        <div class="total-row" id="totalRow" style="display: none;">Общая сумма: <span id="totalSum">0</span> ₽</div>
+    </div>
+</div>
+
+<script>
+    // ==================== ДАННЫЕ ====================
+    let cases = [];
+    let currentCompany = '';
+
+    function loadData() {
+        const stored = localStorage.getItem('cdek_cases');
+        const storedCompany = localStorage.getItem('cdek_company');
+        if (stored) { try { cases = JSON.parse(stored); } catch(e) { cases = []; } }
+        else {
+            cases = [
+                { from: 'Вологда', to: 'Казань', tariff: 'Посылка', mode: 'склад-склад', weight: 10, price: 905, days: '3-4' },
+                { from: 'Вологда', to: 'Москва', tariff: 'Посылка', mode: 'склад-склад', weight: 10, price: 815, days: '1-2' }
+            ];
+            currentCompany = 'ООО "Ромашка"';
+        }
+        cases = cases.map(item => {
+            if (!item.mode) item.mode = 'склад-склад';
+            if (item.weight === undefined) item.weight = null;
+            return item;
+        });
+        if (storedCompany) currentCompany = storedCompany;
+        document.getElementById('companyInput').value = currentCompany;
+        renderTable(); updateCompanyBadge(); updateTotalVisibility();
+    }
+
+    function saveData() {
+        localStorage.setItem('cdek_cases', JSON.stringify(cases));
+        localStorage.setItem('cdek_company', currentCompany);
+    }
+
+    function updateCompanyBadge() {
+        const badge = document.getElementById('companyBadge');
+        if (currentCompany.trim()) { badge.textContent = currentCompany.trim(); badge.style.display = 'inline-block'; }
+        else badge.style.display = 'none';
+    }
+
+    function updateTotalVisibility() {
+        const show = document.getElementById('showTotalCheckbox').checked;
+        const totalRow = document.getElementById('totalRow');
+        totalRow.style.display = (cases.length > 0 && show) ? 'block' : 'none';
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('tableBody');
+        const emptyMsg = document.getElementById('emptyMessage');
+        const countSpan = document.getElementById('count');
+        const totalSpan = document.getElementById('totalSum');
+        const totalRow = document.getElementById('totalRow');
+        if (cases.length === 0) {
+            tbody.innerHTML = ''; emptyMsg.style.display = 'block';
+            countSpan.textContent = '0'; totalRow.style.display = 'none'; return;
+        }
+        emptyMsg.style.display = 'none'; countSpan.textContent = cases.length;
+        let html = ''; let total = 0;
+        cases.forEach((item, index) => {
+            const price = parseFloat(item.price) || 0; total += price;
+            const weight = (item.weight !== null && item.weight !== undefined) ? parseFloat(item.weight).toFixed(1) : '—';
+            html += `<tr>
+                <td>${index + 1}</td>
+                <td>${escapeHtml(item.from)}</td>
+                <td>${escapeHtml(item.to)}</td>
+                <td>${escapeHtml(item.tariff)}</td>
+                <td>${escapeHtml(item.mode)}</td>
+                <td>${weight}</td>
+                <td>${price.toFixed(2)}</td>
+                <td>${item.days || '—'}</td>
+                <td><button class="delete-btn" data-index="${index}"><i class="fas fa-times-circle"></i></button></td>
+            </tr>`;
+        });
+        tbody.innerHTML = html; totalSpan.textContent = total.toFixed(2);
+        updateTotalVisibility();
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                cases.splice(parseInt(this.dataset.index), 1);
+                saveData(); renderTable();
+            });
+        });
+        updateCompanyBadge();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '—';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    document.getElementById('showTotalCheckbox').addEventListener('change', updateTotalVisibility);
+
+    function addSingleCase() {
+        const company = document.getElementById('companyInput').value.trim();
+        if (!company) { alert('Пожалуйста, укажите название компании.'); return; }
+        currentCompany = company;
+        const from = document.getElementById('fromCity').value.trim();
+        const to = document.getElementById('toCity').value.trim();
+        const tariff = document.getElementById('tariff').value;
+        const mode = document.getElementById('mode').value;
+        const weight = parseFloat(document.getElementById('weight').value);
+        const price = parseFloat(document.getElementById('price').value);
+        const days = document.getElementById('days').value.trim();
+        if (!from || !to || !price || isNaN(price) || price <= 0) {
+            alert('Заполните: Город отправителя, Город получателя, Цена.'); return;
+        }
+        cases.push({ from, to, tariff, mode, weight: (isNaN(weight) ? null : weight), price, days });
+        saveData(); renderTable();
+        document.getElementById('fromCity').value = '';
+        document.getElementById('toCity').value = '';
+        document.getElementById('weight').value = '';
+        document.getElementById('price').value = '';
+        document.getElementById('days').value = '';
+    }
+
+    // ==================== ПАРСЕР EXCEL ====================
+    function parseExcelFile(workbook) {
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' });
+        let headerRowIndex = -1;
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            if (row.length === 0) continue;
+            const hasService = row.some(c => String(c).toLowerCase().includes('сервис'));
+            const hasFrom = row.some(c => String(c).toLowerCase().includes('город из'));
+            const hasTo = row.some(c => String(c).toLowerCase().includes('город в'));
+            const hasPrice = row.some(c => String(c).toLowerCase().includes('кг') || String(c).toLowerCase().includes('руб'));
+            if (hasService && hasFrom && hasTo && hasPrice) { headerRowIndex = i; break; }
+        }
+        if (headerRowIndex === -1) { alert('Не найдена строка с заголовками.'); return []; }
+        const headerRow = rows[headerRowIndex];
+        const idxService = headerRow.findIndex(c => String(c).toLowerCase().includes('сервис'));
+        const idxMode = headerRow.findIndex(c => String(c).toLowerCase().includes('режим'));
+        const idxFrom = headerRow.findIndex(c => String(c).toLowerCase().includes('город из'));
+        const idxTo = headerRow.findIndex(c => String(c).toLowerCase().includes('город в'));
+        let idxPrice = headerRow.findIndex(c => String(c).toLowerCase().includes('кг'));
+        if (idxPrice === -1) idxPrice = headerRow.findIndex(c => String(c).toLowerCase().includes('руб'));
+        const idxDaysFrom = headerRow.findIndex(c => String(c).toLowerCase().includes('срок доставки от'));
+        const idxDaysTo = headerRow.findIndex(c => String(c).toLowerCase().includes('срок доставки до'));
+        if (idxFrom === -1 || idxTo === -1 || idxPrice === -1) { alert('Не найдены колонки.'); return []; }
+        let weight = null;
+        const match = String(headerRow[idxPrice] || '').match(/(\d+\.?\d*)\s*кг/);
+        if (match) weight = parseFloat(match[1]);
+        const result = [];
+        for (let i = headerRowIndex + 1; i < rows.length; i++) {
+            const row = rows[i];
+            if (row.every(c => c === '' || c === null || c === undefined)) continue;
+            const from = String(row[idxFrom] || '').trim();
+            const to = String(row[idxTo] || '').trim();
+            const priceRaw = String(row[idxPrice] || '0').replace(/[^\d.,]/g, '').replace(',', '.');
+            const price = parseFloat(priceRaw) || 0;
+            const service = (idxService !== -1) ? String(row[idxService] || 'Посылка').trim() : 'Посылка';
+            let mode = '';
+            if (idxMode !== -1) mode = String(row[idxMode] || '').trim().replace(/\s+/g, ' ').toLowerCase();
+            const daysFrom = (idxDaysFrom !== -1) ? String(row[idxDaysFrom] || '').trim() : '';
+            const daysTo = (idxDaysTo !== -1) ? String(row[idxDaysTo] || '').trim() : '';
+            let daysRange = '';
+            if (daysFrom && daysTo) daysRange = `${daysFrom}-${daysTo}`;
+            else if (daysFrom) daysRange = daysFrom;
+            else if (daysTo) daysRange = daysTo;
+            if (from && to && price > 0) result.push({ from, to, tariff: service, mode, weight, price, days: daysRange });
+        }
+        return result;
+    }
+
+    // ==================== ИМПОРТ ====================
+    document.getElementById('importFileBtn').addEventListener('click', () => document.getElementById('fileInput').click());
+
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            try {
+                const data = new Uint8Array(ev.target.result);
+                const wb = XLSX.read(data, { type: 'array' });
+                const parsed = parseExcelFile(wb);
+                if (parsed.length === 0) { alert('Не найдено данных.'); return; }
+                const company = document.getElementById('companyInput').value.trim();
+                if (!company) { alert('Укажите название компании.'); return; }
+                currentCompany = company;
+                cases.push(...parsed);
+                saveData(); renderTable();
+                alert(`Добавлено ${parsed.length} кейсов.`);
+            } catch(err) { alert('Ошибка: ' + err.message); }
+            document.getElementById('fileInput').value = '';
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
+    document.getElementById('importPasteBtn').addEventListener('click', function() {
+        const text = document.getElementById('pasteArea').value;
+        if (!text.trim()) { alert('Вставьте данные.'); return; }
+        const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
+        if (lines.length < 2) { alert('Мало данных.'); return; }
+        let sep = '\t';
+        if (lines[0].includes('\t')) sep = '\t';
+        else if (lines[0].includes(',')) sep = ',';
+        else { alert('Разделитель не распознан.'); return; }
+        const headers = lines[0].split(sep).map(h => h.trim().toLowerCase());
+        const dataRows = lines.slice(1).map(l => l.split(sep).map(c => c.trim()));
+        const idxService = headers.findIndex(h => h.includes('сервис'));
+        const idxMode = headers.findIndex(h => h.includes('режим'));
+        const idxFrom = headers.findIndex(h => h.includes('город из'));
+        const idxTo = headers.findIndex(h => h.includes('город в'));
+        let idxPrice = headers.findIndex(h => h.includes('кг'));
+        if (idxPrice === -1) idxPrice = headers.findIndex(h => h.includes('руб'));
+        const idxDaysFrom = headers.findIndex(h => h.includes('срок доставки от'));
+        const idxDaysTo = headers.findIndex(h => h.includes('срок доставки до'));
+        if (idxFrom === -1 || idxTo === -1 || idxPrice === -1) { alert('Не найдены колонки.'); return; }
+        let weight = null;
+        const match = (headers[idxPrice] || '').match(/(\d+\.?\d*)\s*кг/);
+        if (match) weight = parseFloat(match[1]);
+        const company = document.getElementById('companyInput').value.trim();
+        if (!company) { alert('Укажите компанию.'); return; }
+        currentCompany = company;
+        let added = 0;
+        dataRows.forEach(row => {
+            const from = row[idxFrom] || '';
+            const to = row[idxTo] || '';
+            const price = parseFloat((row[idxPrice] || '0').replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
+            const service = (idxService !== -1) ? row[idxService] || 'Посылка' : 'Посылка';
+            let mode = '';
+            if (idxMode !== -1) mode = (row[idxMode] || '').trim().replace(/\s+/g, ' ').toLowerCase();
+            const daysFrom = (idxDaysFrom !== -1) ? row[idxDaysFrom] || '' : '';
+            const daysTo = (idxDaysTo !== -1) ? row[idxDaysTo] || '' : '';
+            let daysRange = '';
+            if (daysFrom && daysTo) daysRange = `${daysFrom}-${daysTo}`;
+            else if (daysFrom) daysRange = daysFrom;
+            else if (daysTo) daysRange = daysTo;
+            if (from && to && price > 0) { cases.push({ from, to, tariff: service, mode, weight, price, days: daysRange }); added++; }
+        });
+        if (added === 0) { alert('Не удалось распознать.'); return; }
+        saveData(); renderTable();
+        alert(`Добавлено ${added} кейсов.`);
+        document.getElementById('pasteArea').value = '';
+    });
+
+    // ==================== ЭКСПОРТ PDF (через iframe) ====================
+    function exportPDF() {
+        if (cases.length === 0) { alert('Нет данных для экспорта.'); return; }
+        if (!currentCompany.trim()) { alert('Укажите название компании.'); return; }
+
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+        let tableRows = '';
+        cases.forEach((item, idx) => {
+            const price = parseFloat(item.price) || 0;
+            const weight = (item.weight !== null && item.weight !== undefined) ? parseFloat(item.weight).toFixed(1) : '—';
+            const mode = item.mode || '—';
+            tableRows += `<tr>
+                <td style="padding:8px 12px; border-bottom:1px solid #e2e8e6; text-align:center;">${idx + 1}</td>
+                <td style="padding:8px 12px; border-bottom:1px solid #e2e8e6;">${escapeHtml(item.from)}</td>
+                <td style="padding:8px 12px; border-bottom:1px solid #e2e8e6;">${escapeHtml(item.to)}</td>
+                <td style="padding:8px 12px; border-bottom:1px solid #e2e8e6;">${escapeHtml(item.tariff)}</td>
+                <td style="padding:8px 12px; border-bottom:1px solid #e2e8e6; text-align:center;">${escapeHtml(mode)}</td>
+                <td style="padding:8px 12px; border-bottom:1px solid #e2e8e6; text-align:center;">${weight}</td>
+                <td style="padding:8px 12px; border-bottom:1px solid #e2e8e6; text-align:right;">${price.toFixed(2)}</td>
+                <td style="padding:8px 12px; border-bottom:1px solid #e2e8e6; text-align:center;">${item.days || '—'}</td>
+            </tr>`;
+        });
+        const total = cases.reduce((sum, item) => sum + (parseFloat(item.price) || 0), 0);
+        const showTotal = document.getElementById('showTotalCheckbox').checked;
+
+        const pdfHtml = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Коммерческое предложение</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: 'Inter', Arial, sans-serif; padding: 30px 35px 30px; color: #1A2C2C; background: white; }
+.header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #119C41; padding-bottom: 14px; margin-bottom: 20px; }
+.logo { font-size: 28px; font-weight: 800; color: #1A2C2C; }
+.logo span { color: #119C41; }
+.manager { text-align: right; font-size: 11px; color: #5a6e6e; line-height: 1.55; }
+.manager strong { color: #1A2C2C; font-size: 12px; }
+.manager a { color: #119C41; text-decoration: none; }
+.manager .address { color: #7a8a8a; font-size: 10px; }
+h1 { font-size: 22px; font-weight: 700; margin: 0 0 2px 0; }
+.date { color: #5a6e6e; margin-bottom: 20px; font-size: 13px; }
+.table-wrapper { border-radius: 12px; overflow: hidden; border: 1px solid #d0d9df; margin: 16px 0; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; background: white; }
+th { background: #0a2b2b; color: white; font-weight: 700; padding: 10px 12px; text-align: left; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 0.4px; border-bottom: 2px solid #119C41; }
+td { padding: 8px 12px; border-bottom: 1px solid #edf2f6; color: #1a2c2c; }
+tr:last-child td { border-bottom: none; }
+tr:nth-child(even) td { background: #f8fafc; }
+td:first-child { font-weight: 600; color: #119C41; }
+.total { text-align: right; font-weight: 700; font-size: 17px; margin-top: 8px; color: #1A2C2C; }
+.total span { background: #E8F5ED; padding: 4px 16px; border-radius: 30px; display: inline-block; }
+.advantages { margin: 32px 0 25px 0; padding: 22px 26px; background: #f8fafc; border-radius: 14px; border: 1px solid #dce4e8; }
+.advantages h3 { font-size: 16px; font-weight: 700; color: #1A2C2C; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.advantages h3 i { color: #119C41; font-size: 20px; }
+.advantages-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px 16px; }
+.advantage-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #1A2C2C; padding: 4px 0; }
+.advantage-item i { color: #119C41; font-size: 14px; width: 22px; text-align: center; }
+.signature { margin-top: 32px; border-top: 1px solid #e2e8e6; padding-top: 22px; }
+.signature p { font-size: 13px; color: #5a6e6e; margin-bottom: 4px; }
+.signature .name { font-size: 16px; font-weight: 600; color: #1A2C2C; margin: 4px 0; }
+.signature .position { font-size: 12px; color: #5a6e6e; }
+.signature .contacts { font-size: 11px; color: #5a6e6e; margin-top: 6px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="header">
+<div class="logo">СДЭК<span>.</span></div>
+<div class="manager">
+<strong>Бухтоярова Дарья</strong><br>
+Коммерческий представитель<br>
+Группа Компаний СДЭК<br>
+<span class="address">350072, г. Краснодар, улица имени 40-летия Победы, 37</span><br>
+<a href="mailto:d.bukhtoiarova@cdek.ru">d.bukhtoiarova@cdek.ru</a><br>
+<a href="tel:+79522366284">+7 952 236 62 84</a> · <a href="tel:+79533618517">8 953 361 85 17</a> (доб. 6004)
+</div>
+</div>
+<h1>Коммерческое предложение для ${escapeHtml(currentCompany)}</h1>
+<div class="date">Дата составления: ${dateStr}</div>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr>
+<th style="text-align:center; width:40px;">№</th>
+<th style="min-width:120px;">Откуда</th>
+<th style="min-width:120px;">Куда</th>
+<th style="min-width:80px;">Тариф</th>
+<th style="min-width:90px;">Режим</th>
+<th style="text-align:center; width:70px;">Вес, кг</th>
+<th style="text-align:right; width:80px;">Цена, ₽</th>
+<th style="text-align:center; width:80px;">Срок (дн.)</th>
+</tr>
+</thead>
+<tbody>${tableRows}</tbody>
+</table>
+</div>
+${showTotal ? `<div class="total"><span>Итого: ${total.toFixed(2)} ₽</span></div>` : ''}
+<div class="advantages">
+<h3><i class="fas fa-star"></i> Почему бизнес выбирает СДЭК</h3>
+<div class="advantages-grid">
+<div class="advantage-item"><i class="fas fa-route"></i> Более 4 000 пунктов выдачи</div>
+<div class="advantage-item"><i class="fas fa-rocket"></i> Доставка от 1 дня</div>
+<div class="advantage-item"><i class="fas fa-boxes"></i> Грузы от документов до паллет</div>
+<div class="advantage-item"><i class="fas fa-headset"></i> Персональный менеджер 24/7</div>
+<div class="advantage-item"><i class="fas fa-handshake"></i> Отсрочка платежа для юр. лиц</div>
+<div class="advantage-item"><i class="fas fa-shield-alt"></i> Страхование грузов на всём маршруте</div>
+</div>
+</div>
+<div class="signature">
+<p>С уважением,</p>
+<div class="name">Бухтоярова Дарья</div>
+<div class="position">Коммерческий представитель · Группа Компаний СДЭК</div>
+<div class="contacts">
+350072, г. Краснодар, улица имени 40-летия Победы, 37<br>
+Тел.: +7 952 236 62 84 · 8 953 361 85 17 (доб. 6004)<br>
+E-mail: d.bukhtoiarova@cdek.ru
+</div>
+</div>
+</body>
+</html>`;
+
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'fixed';
+        iframe.style.right = '0';
+        iframe.style.bottom = '0';
+        iframe.style.width = '0';
+        iframe.style.height = '0';
+        iframe.style.border = '0';
+        document.body.appendChild(iframe);
+
+        const doc = iframe.contentWindow.document;
+        doc.open();
+        doc.write(pdfHtml);
+        doc.close();
+
+        iframe.onload = function() {
+            setTimeout(function() {
+                try {
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                } catch (e) {
+                    alert('Ошибка печати: ' + e.message);
+                }
+                setTimeout(function() {
+                    if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+                }, 60000);
+            }, 500);
+        };
+    }
+
+    // ==================== ОЧИСТКА ====================
+    function clearAll() {
+        if (cases.length === 0) return;
+        if (confirm('Удалить все кейсы?')) {
+            cases = []; saveData(); renderTable();
+        }
+    }
+
+    // ==================== ИНИЦИАЛИЗАЦИЯ ====================
+    document.addEventListener('DOMContentLoaded', function() {
+        loadData();
+        document.getElementById('companyInput').addEventListener('input', function() {
+            currentCompany = this.value.trim();
+            saveData(); updateCompanyBadge();
+        });
+        document.getElementById('addBtn').addEventListener('click', addSingleCase);
+        document.getElementById('exportPdfBtn').addEventListener('click', exportPDF);
+        document.getElementById('clearAllBtn').addEventListener('click', clearAll);
+    });
+</script>
+</body>
+</html>
